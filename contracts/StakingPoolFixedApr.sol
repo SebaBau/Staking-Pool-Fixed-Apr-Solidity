@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: MIT
 
+import "./interfaces/IERC20.sol";
 import "./helpers/Ownable.sol";
+import "./libraries/SafeERC20.sol";
 
 pragma solidity 0.8.17;
 
 /// @title
 /// @notice
 contract StakingPoolFixedApr is Ownable {
+    using SafeERC20 for IERC20;
+
+    error StakingPoolFixedApr_IncorrectAmountTransferred();
+
     struct StakingPool {
         uint256 rewardsAdded;
-        address token;
+        IERC20 token;
         uint64 startTime;
         uint32 unstakePeriod;
         uint64 endTime;
@@ -33,7 +39,7 @@ contract StakingPoolFixedApr is Ownable {
 
     function addStakingPool(
         uint256 rewards,
-        address token_,
+        IERC20 token_,
         uint64 startTime_,
         uint64 endTime_,
         uint16 apr_
@@ -47,7 +53,10 @@ contract StakingPoolFixedApr is Ownable {
         stakingPool.endTime = endTime_;
         stakingPool.apr = apr_;
 
-        emit StakingPoolAdded(stakingPoolId, rewards, token_, startTime_, endTime_, apr_);
+        if (rewards != token_.safeTransferFrom(msg.sender, address(this), rewards))
+            revert StakingPoolFixedApr_IncorrectAmountTransferred();
+
+        emit StakingPoolAdded(stakingPoolId, rewards, address(token_), startTime_, endTime_, apr_);
     }
 
     function stake() external {}
