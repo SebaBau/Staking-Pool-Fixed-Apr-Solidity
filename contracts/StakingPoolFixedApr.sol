@@ -28,8 +28,6 @@ contract StakingPoolFixedApr is Ownable {
         address token,
         uint64 startTime,
         uint64 endTime,
-        uint32 unstakePeriod,
-        uint16 penaltyFee,
         uint16 apr
     );
 
@@ -38,8 +36,6 @@ contract StakingPoolFixedApr is Ownable {
         address token_,
         uint64 startTime_,
         uint64 endTime_,
-        uint32 unstakePeriod_,
-        uint16 penaltyFee_,
         uint16 apr_
     ) external onlyOwner {
         uint256 stakingPoolId = ++lastStakingPoolId;
@@ -49,20 +45,14 @@ contract StakingPoolFixedApr is Ownable {
         stakingPool.token = token_;
         stakingPool.startTime = startTime_;
         stakingPool.endTime = endTime_;
-        stakingPool.unstakePeriod = unstakePeriod_;
-        stakingPool.penaltyFee = penaltyFee_;
         stakingPool.apr = apr_;
 
-        emit StakingPoolAdded(stakingPoolId, rewards, token_, startTime_, endTime_, unstakePeriod_, penaltyFee_, apr_);
+        emit StakingPoolAdded(stakingPoolId, rewards, token_, startTime_, endTime_, apr_);
     }
 
     function stake() external {}
 
-    function requestUnstake() external {}
-
     function unstake() external {}
-
-    function unstakeWithFee() external {}
 
     function getAllStakingPools() external view returns (StakingPool[] memory stakingPools) {}
 
