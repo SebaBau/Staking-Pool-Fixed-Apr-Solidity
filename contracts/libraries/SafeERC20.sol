@@ -9,25 +9,27 @@ library SafeERC20 {
     error SafeERC20_TransferFailed();
 
     function safeTransfer(
-        address token,
+        IERC20 token,
         address to,
         uint256 amount
     ) internal {
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, amount));
-        _validateTransfer(token, success, data);
+        (bool success, bytes memory data) = address(token).call(
+            abi.encodeWithSelector(token.transfer.selector, to, amount)
+        );
+        _validateTransfer(address(token), success, data);
     }
 
     function safeTransferFrom(
-        address token,
+        IERC20 token,
         address from,
         address to,
         uint256 amount
     ) internal returns (uint256) {
         uint256 preTransferBalance = IERC20(token).balanceOf(to);
-        (bool success, bytes memory data) = token.call(
-            abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, amount)
+        (bool success, bytes memory data) = address(token).call(
+            abi.encodeWithSelector(token.transferFrom.selector, from, to, amount)
         );
-        _validateTransfer(token, success, data);
+        _validateTransfer(address(token), success, data);
         uint256 postTransferBalance = IERC20(token).balanceOf(to);
 
         return postTransferBalance - preTransferBalance;
