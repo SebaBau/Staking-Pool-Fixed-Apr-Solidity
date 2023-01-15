@@ -88,9 +88,11 @@ contract StakingPoolsFixedApr is Ownable {
         );
     }
 
-    function stake() external {}
+    function stake(uint256 stakingPoolId, uint256 amount) external {}
 
     function unstake() external {}
+
+    function getAllUserStakes(address user) external view returns (Stake[] memory stakes) {}
 
     function getAllStakingPools() external view returns (StakingPool[] memory stakingPools) {}
 
