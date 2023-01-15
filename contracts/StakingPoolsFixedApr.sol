@@ -103,6 +103,22 @@ contract StakingPoolsFixedApr is Ownable {
 
     function getAllActiveStakingPools() external view returns (StakingPool[] memory stakingPools) {}
 
+    function _deleteFromStakeIds(address user, uint256 stakeId) private {
+        uint256 length = userStakeIds[user].length;
+
+        if (length > 0) {
+            for (uint256 i = 0; i < length; i++) {
+                if (userStakeIds[user][i] == stakeId) {
+                    userStakeIds[user][i] = userStakeIds[user][length - 1];
+                    userStakeIds[user].pop();
+                    break;
+                }
+            }
+        } else {
+            userStakeIds[user].pop();
+        }
+    }
+
     function _validateStakingPoolData(
         uint256 rewardsAmount,
         uint64 startTime,
