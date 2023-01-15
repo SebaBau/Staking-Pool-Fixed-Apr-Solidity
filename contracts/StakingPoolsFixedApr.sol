@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
 
 import "./interfaces/IERC20.sol";
+
 import "./helpers/Ownable.sol";
+
 import "./libraries/SafeERC20.sol";
+import "./libraries/StableMath.sol";
 
 pragma solidity 0.8.17;
 
 /// @title
 /// @notice
-contract StakingPoolFixedApr is Ownable {
+contract StakingPoolsFixedApr is Ownable {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
 
     error StakingPoolFixedApr_IncorrectAmountTransferred();
     error StakingPoolFixedApr_ZeroRewardsAmount();
@@ -28,7 +32,7 @@ contract StakingPoolFixedApr is Ownable {
     uint256 private lastStakingPoolId;
 
     mapping(uint256 => StakingPool) public stakingPools;
-    mapping(uint256 => uint256) public rewardsDistributedPerStakingPool;
+    mapping(uint256 => uint256) public rewardsDistributed;
 
     event StakingPoolAdded(
         uint256 indexed stakingPoolId,
@@ -92,5 +96,17 @@ contract StakingPoolFixedApr is Ownable {
         if (startTime < block.timestamp) revert StakingPoolFixedApr_StartTimeMustBeInTheFuture();
 
         if (startTime >= endTime) revert StakingPoolFixedApr_StartTimeMustBeLaterThanEndTime();
+    }
+
+    function _calculateRewards(
+        uint256 stakedAmount,
+        uint64 startTime,
+        uint64 endTime,
+        uint16 apr
+    ) private pure returns (uint256) {
+        uint256 annualAmount = (stakedAmount * apr) / 10000;
+        uint256 period = endTime - startTime;
+        uint256 timeRatio = period.divPrecisely(365 days);
+        return annualAmount.mulTruncate(timeRatio);
     }
 }
