@@ -29,10 +29,20 @@ contract StakingPoolsFixedApr is Ownable {
         uint16 apr;
     }
 
+    struct Stake {
+        uint256 stakingPoolId;
+        uint256 staked;
+        uint256 rewards;
+        uint64 unstakePossibleAt;
+    }
+
     uint256 private lastStakingPoolId;
+    uint256 private lastStakeId;
 
     mapping(uint256 => StakingPool) public stakingPools;
     mapping(uint256 => uint256) public rewardsDistributed;
+    mapping(uint256 => Stake) public stakes;
+    mapping(address => uint256[]) public userStakeIds;
 
     event StakingPoolAdded(
         uint256 indexed stakingPoolId,
