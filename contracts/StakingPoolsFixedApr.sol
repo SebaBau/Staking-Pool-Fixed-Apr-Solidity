@@ -38,6 +38,7 @@ contract StakingPoolsFixedApr is Ownable {
         uint256 stakingPoolId;
         uint256 staked;
         uint256 rewards;
+        address owner;
         uint64 unstakePossibleAt;
     }
 
