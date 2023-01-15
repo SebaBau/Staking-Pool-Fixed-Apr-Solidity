@@ -22,7 +22,7 @@ contract StakingPoolsFixedApr is Ownable {
     error StakingPoolFixedApr_PoolNotExists();
     error StakingPoolFixedApr_PoolClosed();
     error StakingPoolFixedApr_AmountIsBelowMinimumToStake();
-    error StakingPoolFixedApr_AllRewardsDistributed();
+    error StakingPoolFixedApr_ZeroCalculatedRewards();
     error StakingPoolFixedApr_NotEnoughTokensForReward();
 
     struct StakingPool {
