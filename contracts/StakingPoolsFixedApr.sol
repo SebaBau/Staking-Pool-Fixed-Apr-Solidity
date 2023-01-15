@@ -94,7 +94,34 @@ contract StakingPoolsFixedApr is Ownable {
         );
     }
 
-    function stake(uint256 stakingPoolId, uint256 amount) external {}
+    function stake(uint256 stakingPoolId, uint256 amount) external {
+        StakingPool memory stakingPool = stakingPools[stakingPoolId];
+
+        if (stakingPool.startTime == 0) revert StakingPoolFixedApr_PoolNotExists();
+
+        if (stakingPool.endTime <= block.timestamp) revert StakingPoolFixedApr_PoolClosed();
+
+        if (amount < stakingPool.minimumToStake) revert StakingPoolFixedApr_AmountIsBelowMinimumToStake();
+
+        uint64 startTime = block.timestamp > stakingPool.startTime ? uint64(block.timestamp) : stakingPool.startTime;
+
+        uint256 calculatedRewards = _calculateRewards(amount, startTime, stakingPool.endTime, stakingPool.apr);
+
+        if (calculatedRewards == 0) revert StakingPoolFixedApr_ZeroCalculatedRewards();
+
+        if (stakingPool.rewardsAdded - rewardsDistributed[stakingPoolId] < calculatedRewards)
+            revert StakingPoolFixedApr_NotEnoughTokensForReward();
+
+        Stake storage userStake = stakes[++lastStakeId];
+        userStake.stakingPoolId = stakingPoolId;
+        userStake.staked = amount;
+        userStake.rewards = calculatedRewards;
+        userStake.owner = msg.sender;
+        userStake.unstakePossibleAt = stakingPool.endTime;
+
+        if (amount != stakingPool.token.safeTransferFrom(msg.sender, address(this), amount))
+            revert StakingPoolFixedApr_IncorrectAmountTransferred();
+    }
 
     function unstake() external {}
 
