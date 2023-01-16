@@ -60,6 +60,17 @@ contract StakingPoolsFixedApr is Ownable {
         uint16 apr
     );
 
+    event Staked(
+        address indexed user,
+        uint256 indexed stakeId,
+        uint256 stakingPoolId,
+        uint256 staked,
+        uint256 rewards,
+        uint64 unstakePossibleAt
+    );
+
+    event Unstaked(address indexed user, uint256 indexed stakeId);
+
     function addStakingPool(
         uint256 rewardsAmount,
         uint256 minimumToStake_,
