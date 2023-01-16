@@ -125,18 +125,42 @@ contract StakingPoolsFixedApr is Ownable {
         if (stakingPool.rewardsAdded - rewardsDistributed[stakingPoolId] < calculatedRewards)
             revert StakingPoolFixedApr_NotEnoughTokensForReward();
 
-        Stake storage userStake = stakes[++lastStakeId];
+        uint256 stakeId = ++lastStakeId;
+
+        Stake storage userStake = stakes[stakeId];
         userStake.stakingPoolId = stakingPoolId;
         userStake.staked = amount;
         userStake.rewards = calculatedRewards;
         userStake.owner = msg.sender;
         userStake.unstakePossibleAt = stakingPool.endTime;
 
+        userStakeIds[msg.sender].push(stakeId);
+
+        rewardsDistributed[stakingPoolId] += calculatedRewards;
+
         if (amount != stakingPool.token.safeTransferFrom(msg.sender, address(this), amount))
             revert StakingPoolFixedApr_IncorrectAmountTransferred();
+
+        emit Staked(msg.sender, stakeId, stakingPoolId, amount, calculatedRewards, stakingPool.endTime);
     }
 
-    function unstake() external {}
+    function unstake(uint256 stakeId) external {
+        Stake memory userStake = stakes[stakeId];
+
+        if (userStake.owner != msg.sender) revert StakingPoolFixedApr_StakeNotExists();
+
+        if (userStake.unstakePossibleAt > block.timestamp) revert StakingPoolFixedApr_CannotUnstakeYet();
+
+        uint256 toWithdraw = userStake.staked + userStake.rewards;
+
+        uint256 stakingPoolId = userStake.stakingPoolId;
+
+        delete stakes[stakeId];
+
+        stakingPools[stakingPoolId].token.safeTransfer(msg.sender, toWithdraw);
+
+        emit Unstaked(msg.sender, stakeId);
+    }
 
     function getAllUserStakes(address user) external view returns (Stake[] memory stakes) {}
 
