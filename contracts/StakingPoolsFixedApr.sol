@@ -207,4 +207,18 @@ contract StakingPoolsFixedApr is Ownable {
         uint256 timeRatio = period.divPrecisely(365 days);
         return annualAmount.mulTruncate(timeRatio);
     }
+
+    function _calculatePoolStatus(
+        uint256 rewardsAdded,
+        uint256 rewardsDistributed_,
+        uint256 currentTime,
+        uint64 startTime,
+        uint64 endTime
+    ) private pure returns (PoolStatus) {
+        if (startTime > currentTime) return PoolStatus.Pending;
+        else if (startTime <= currentTime && endTime > currentTime && rewardsAdded == rewardsDistributed_)
+            return PoolStatus.OpenWithoutRewards;
+        else if (startTime <= currentTime && endTime > currentTime) return PoolStatus.Open;
+        else return PoolStatus.Closed;
+    }
 }
