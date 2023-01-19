@@ -26,6 +26,15 @@ contract StakingPoolsFixedApr is Ownable {
     error StakingPoolFixedApr_NotEnoughTokensForReward();
     error StakingPoolFixedApr_StakeNotExists();
     error StakingPoolFixedApr_CannotUnstakeYet();
+    error StakingPoolFixedApr_CannotBeforeEndTime();
+    error StakingPoolFixedApr_NothingToWithdraw();
+
+    enum PoolStatus {
+        Pending,
+        Open,
+        OpenWithoutRewards,
+        Closed
+    }
 
     struct StakingPool {
         uint256 rewardsAdded;
@@ -42,6 +51,26 @@ contract StakingPoolsFixedApr is Ownable {
         uint256 rewards;
         address owner;
         uint64 unstakePossibleAt;
+    }
+
+    struct StakeDTO {
+        uint256 stakeId;
+        uint256 stakingPoolId;
+        uint256 staked;
+        uint256 rewards;
+        address owner;
+        uint64 unstakePossibleAt;
+    }
+
+    struct StakingPoolDTO {
+        uint256 rewardsAdded;
+        uint256 rewardsDistributed;
+        uint256 minimumToStake;
+        IERC20 token;
+        uint64 startTime;
+        uint64 endTime;
+        uint16 apr;
+        PoolStatus status;
     }
 
     uint256 private lastStakingPoolId;
@@ -72,6 +101,13 @@ contract StakingPoolsFixedApr is Ownable {
     );
 
     event Unstaked(address indexed user, uint256 indexed stakeId);
+
+    event Withdrawn(uint256 indexed stakingPoolId, uint256 amount);
+
+    modifier isStakingPoolExists(uint256 stakingPoolId) {
+        if (stakingPools[stakingPoolId].startTime == 0) revert StakingPoolFixedApr_PoolNotExists();
+        _;
+    }
 
     function addStakingPool(
         uint256 rewardsAmount,
