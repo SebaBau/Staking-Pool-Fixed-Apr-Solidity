@@ -30,6 +30,20 @@ export async function advanceTime(time) {
   await ethers.provider.send("evm_increaseTime", [time]);
 }
 
+export async function getLastBlockTimestamp() {
+  const block = await ethers.provider.getBlock("latest");
+  return block.timestamp;
+}
+
+export async function setNextBlockTimestamp(time) {
+  return ethers.provider.send("evm_setNextBlockTimestamp", [time]);
+}
+
+export async function setNextBlockTimestampAndAdvanceBlock(time) {
+  await ethers.provider.send("evm_setNextBlockTimestamp", [time]);
+  await advanceBlock();
+}
+
 export const duration: any = {
   seconds: function (val) {
     return BigNumber.from(val);
