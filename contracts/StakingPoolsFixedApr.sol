@@ -211,12 +211,22 @@ contract StakingPoolsFixedApr is Ownable {
         emit Withdrawn(stakingPoolId, amountToWithdraw);
     }
 
-    function getAllUserStakes(address user) external view returns (Stake[] memory userStakes) {
+    function getAllUserStakes(address user) external view returns (StakeDTO[] memory userStakes) {
         uint256 userStakeIdLength = userStakeIds[user].length;
-        userStakes = new Stake[](userStakeIdLength);
+        userStakes = new StakeDTO[](userStakeIdLength);
 
         for (uint256 i = 0; i < userStakeIdLength; i++) {
-            userStakes[i] = stakes[userStakeIds[user][i]];
+            StakeDTO memory userStakeDto;
+
+            Stake memory userStake = stakes[userStakeIds[user][i]];
+
+            userStakeDto.stakeId = userStakeIds[user][i];
+            userStakeDto.stakingPoolId = userStake.stakingPoolId;
+            userStakeDto.staked = userStake.staked;
+            userStakeDto.rewards = userStake.rewards;
+            userStakeDto.unstakePossibleAt = userStake.unstakePossibleAt;
+
+            userStakes[i] = userStakeDto;
         }
     }
 
