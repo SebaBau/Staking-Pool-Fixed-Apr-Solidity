@@ -1,6 +1,11 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { getBigNumber, getLastBlockTimestamp, setNextBlockTimestamp } from "./utilities";
+import {
+  getBigNumber,
+  getLastBlockTimestamp,
+  setNextBlockTimestamp,
+  setNextBlockTimestampAndAdvanceBlock,
+} from "./utilities";
 
 import { StakingPoolsFixedApr, ERC20FeeMock } from "../typechain";
 import { BigNumber } from "ethers";
@@ -839,15 +844,53 @@ describe("Test Set Name", () => {
 
       await setNextBlockTimestamp(endTime + 1);
 
-      const test = await stakingContract.stakes(1);
-      const test1 = await stakingContract.stakes(2);
-
-      console.log(test.rewards.toString());
-      console.log(test1.rewards.toString());
-
       await expect(stakingContract.withdrawUnusedRewards(1)).to.be.revertedWithCustomError(
         stakingContract,
         StakingPoolFixedApr_NothingToWithdraw_Error
+      );
+    });
+  });
+
+  describe("'calculateRewards' function tests", () => {
+    let startTime;
+    let endTime;
+
+    beforeEach(async () => {
+      lastBlockTime = await getLastBlockTimestamp();
+
+      startTime = lastBlockTime + 60;
+      endTime = lastBlockTime + 3_660;
+
+      await erc20fee.approve(stakingContract.address, getBigNumber(10_000));
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        startTime,
+        endTime,
+        1_000
+      );
+    });
+
+    it("Should work correctly and calculate rewards (before Staking Pool start time)", async () => {
+      const calculatedRewards = await stakingContract.calculateRewards(1, getBigNumber(10_000));
+
+      expect(calculatedRewards).to.be.equal(BigNumber.from("114155251141552000"));
+    });
+
+    it("Should work correctly and calculate rewards (after Staking Pool start time)", async () => {
+      await setNextBlockTimestampAndAdvanceBlock(startTime + 100);
+
+      const calculatedRewards = await stakingContract.calculateRewards(1, getBigNumber(10_000));
+
+      expect(calculatedRewards).to.be.equal(BigNumber.from("110984271943176000"));
+    });
+
+    it("Should revert when Staking Pool doesn't exist", async () => {
+      await expect(stakingContract.calculateRewards(2, getBigNumber(500))).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_PoolNotExists_Error
       );
     });
   });
