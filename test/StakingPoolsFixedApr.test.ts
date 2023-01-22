@@ -225,7 +225,7 @@ describe("Test Set Name", () => {
     });
 
     it("Should work correctly and add new stake", async () => {
-      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const preStakeData = await stakingContract.stakes(1);
       const preRewardsDistributed = await stakingContract.rewardsDistributed(1);
       const preUserBalance = await erc20fee.balanceOf(alice.address);
@@ -237,7 +237,7 @@ describe("Test Set Name", () => {
         .to.emit(stakingContract, StakingPoolFixedApr_Staked_Event)
         .withArgs(alice.address, 1, 1, getBigNumber(1_000), BigNumber.from("11415525114155200"), endTime);
 
-      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const postStakeData = await stakingContract.stakes(1);
       const postRewardsDistributed = await stakingContract.rewardsDistributed(1);
       const postUserBalance = await erc20fee.balanceOf(alice.address);
@@ -245,7 +245,7 @@ describe("Test Set Name", () => {
 
       // Pre Data
 
-      expect(preUserStakeIds.length).to.be.equal(0);
+      expect(preUserids.length).to.be.equal(0);
 
       expect(preStakeData.stakingPoolId).to.be.equal(0);
       expect(preStakeData.staked).to.be.equal(0);
@@ -261,8 +261,8 @@ describe("Test Set Name", () => {
 
       // Post Data
 
-      expect(postUserStakeIds.length).to.be.equal(1);
-      expect(postUserStakeIds[0]).to.be.equal(1);
+      expect(postUserids.length).to.be.equal(1);
+      expect(postUserids[0]).to.be.equal(1);
 
       expect(postStakeData.stakingPoolId).to.be.equal(1);
       expect(postStakeData.staked).to.be.equal(getBigNumber(1_000));
@@ -286,7 +286,7 @@ describe("Test Set Name", () => {
 
       await erc20fee.connect(bob).approve(stakingContract.address, getBigNumber(10_000));
 
-      const preUserStakeIds = await stakingContract.getAllUserStakeIds(bob.address);
+      const preUserids = await stakingContract.getAllUserStakeIds(bob.address);
       const preStakeData = await stakingContract.stakes(2);
       const preRewardsDistributed = await stakingContract.rewardsDistributed(1);
       const preUserBalance = await erc20fee.balanceOf(bob.address);
@@ -296,7 +296,7 @@ describe("Test Set Name", () => {
         .to.emit(stakingContract, StakingPoolFixedApr_Staked_Event)
         .withArgs(bob.address, 2, 1, getBigNumber(10_000), BigNumber.from("114155251141552000"), endTime);
 
-      const postUserStakeIds = await stakingContract.getAllUserStakeIds(bob.address);
+      const postUserids = await stakingContract.getAllUserStakeIds(bob.address);
       const postStakeData = await stakingContract.stakes(2);
       const postRewardsDistributed = await stakingContract.rewardsDistributed(1);
       const postUserBalance = await erc20fee.balanceOf(bob.address);
@@ -304,7 +304,7 @@ describe("Test Set Name", () => {
 
       // Pre Data
 
-      expect(preUserStakeIds.length).to.be.equal(0);
+      expect(preUserids.length).to.be.equal(0);
 
       expect(preStakeData.stakingPoolId).to.be.equal(0);
       expect(preStakeData.staked).to.be.equal(0);
@@ -320,8 +320,8 @@ describe("Test Set Name", () => {
 
       // Post Data
 
-      expect(postUserStakeIds.length).to.be.equal(1);
-      expect(postUserStakeIds[0]).to.be.equal(2);
+      expect(postUserids.length).to.be.equal(1);
+      expect(postUserids[0]).to.be.equal(2);
 
       expect(postStakeData.stakingPoolId).to.be.equal(1);
       expect(postStakeData.staked).to.be.equal(getBigNumber(10_000));
@@ -361,7 +361,7 @@ describe("Test Set Name", () => {
 
       lastBlockTime = await getLastBlockTimestamp();
 
-      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const preSecondStakeData = await stakingContract.stakes(2);
       const preSecondPoolRewardsDistributed = await stakingContract.rewardsDistributed(2);
       const preUserBalance = await erc20fee.balanceOf(alice.address);
@@ -380,7 +380,7 @@ describe("Test Set Name", () => {
           secondStakingPoolEndTime
         );
 
-      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const postFirstStakeData = await stakingContract.stakes(1);
       const postSecondStakeData = await stakingContract.stakes(2);
       const postFirstPoolRewardsDistributed = await stakingContract.rewardsDistributed(1);
@@ -390,8 +390,8 @@ describe("Test Set Name", () => {
 
       // Pre Data
 
-      expect(preUserStakeIds.length).to.be.equal(1);
-      expect(preUserStakeIds[0]).to.be.equal(1);
+      expect(preUserids.length).to.be.equal(1);
+      expect(preUserids[0]).to.be.equal(1);
 
       expect(preSecondStakeData.stakingPoolId).to.be.equal(0);
       expect(preSecondStakeData.staked).to.be.equal(0);
@@ -407,9 +407,9 @@ describe("Test Set Name", () => {
 
       // Post Data
 
-      expect(postUserStakeIds.length).to.be.equal(2);
-      expect(postUserStakeIds[0]).to.be.equal(1);
-      expect(postUserStakeIds[1]).to.be.equal(2);
+      expect(postUserids.length).to.be.equal(2);
+      expect(postUserids[0]).to.be.equal(1);
+      expect(postUserids[1]).to.be.equal(2);
 
       expect(postFirstStakeData.stakingPoolId).to.be.equal(1);
       expect(postFirstStakeData.staked).to.be.equal(getBigNumber(1_000));
@@ -553,7 +553,7 @@ describe("Test Set Name", () => {
       await setNextBlockTimestamp(endTime);
 
       const preStakeData = await stakingContract.stakes(1);
-      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const preUserBalance = await erc20fee.balanceOf(alice.address);
       const preStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
 
@@ -562,7 +562,7 @@ describe("Test Set Name", () => {
         .withArgs(alice.address, 1);
 
       const postStakeData = await stakingContract.stakes(1);
-      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const postUserBalance = await erc20fee.balanceOf(alice.address);
       const postStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
 
@@ -574,8 +574,8 @@ describe("Test Set Name", () => {
       expect(preStakeData.owner).to.be.equal(alice.address);
       expect(preStakeData.unstakePossibleAt).to.be.equal(endTime);
 
-      expect(preUserStakeIds.length).to.be.equal(1);
-      expect(preUserStakeIds[0]).to.be.equal(1);
+      expect(preUserids.length).to.be.equal(1);
+      expect(preUserids[0]).to.be.equal(1);
 
       expect(preUserBalance).to.be.equal(getBigNumber(9_000));
 
@@ -589,7 +589,7 @@ describe("Test Set Name", () => {
       expect(postStakeData.owner).to.be.equal(ethers.constants.AddressZero);
       expect(postStakeData.unstakePossibleAt).to.be.equal(0);
 
-      expect(postUserStakeIds.length).to.be.equal(0);
+      expect(postUserids.length).to.be.equal(0);
 
       expect(postUserBalance).to.be.equal(BigNumber.from("10000011415525114155200"));
 
@@ -614,7 +614,7 @@ describe("Test Set Name", () => {
       await setNextBlockTimestamp(endTime);
 
       const preStakeData = await stakingContract.stakes(4);
-      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const preUserBalance = await erc20fee.balanceOf(alice.address);
       const preStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
 
@@ -623,7 +623,7 @@ describe("Test Set Name", () => {
         .withArgs(alice.address, 4);
 
       const postStakeData = await stakingContract.stakes(4);
-      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const postUserBalance = await erc20fee.balanceOf(alice.address);
       const postStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
 
@@ -635,11 +635,11 @@ describe("Test Set Name", () => {
       expect(preStakeData.owner).to.be.equal(alice.address);
       expect(preStakeData.unstakePossibleAt).to.be.equal(endTime);
 
-      expect(preUserStakeIds.length).to.be.equal(4);
-      expect(preUserStakeIds[0]).to.be.equal(1);
-      expect(preUserStakeIds[1]).to.be.equal(2);
-      expect(preUserStakeIds[2]).to.be.equal(3);
-      expect(preUserStakeIds[3]).to.be.equal(4);
+      expect(preUserids.length).to.be.equal(4);
+      expect(preUserids[0]).to.be.equal(1);
+      expect(preUserids[1]).to.be.equal(2);
+      expect(preUserids[2]).to.be.equal(3);
+      expect(preUserids[3]).to.be.equal(4);
 
       expect(preUserBalance).to.be.equal(getBigNumber(6_000));
 
@@ -653,10 +653,10 @@ describe("Test Set Name", () => {
       expect(postStakeData.owner).to.be.equal(ethers.constants.AddressZero);
       expect(postStakeData.unstakePossibleAt).to.be.equal(0);
 
-      expect(postUserStakeIds.length).to.be.equal(3);
-      expect(postUserStakeIds[0]).to.be.equal(1);
-      expect(postUserStakeIds[1]).to.be.equal(2);
-      expect(postUserStakeIds[2]).to.be.equal(3);
+      expect(postUserids.length).to.be.equal(3);
+      expect(postUserids[0]).to.be.equal(1);
+      expect(postUserids[1]).to.be.equal(2);
+      expect(postUserids[2]).to.be.equal(3);
 
       expect(postUserBalance).to.be.equal(BigNumber.from("7000011415525114155200"));
 
@@ -681,7 +681,7 @@ describe("Test Set Name", () => {
       await setNextBlockTimestamp(endTime);
 
       const preStakeData = await stakingContract.stakes(2);
-      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const preUserBalance = await erc20fee.balanceOf(alice.address);
       const preStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
 
@@ -690,7 +690,7 @@ describe("Test Set Name", () => {
         .withArgs(alice.address, 2);
 
       const postStakeData = await stakingContract.stakes(2);
-      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserids = await stakingContract.getAllUserStakeIds(alice.address);
       const postUserBalance = await erc20fee.balanceOf(alice.address);
       const postStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
 
@@ -702,11 +702,11 @@ describe("Test Set Name", () => {
       expect(preStakeData.owner).to.be.equal(alice.address);
       expect(preStakeData.unstakePossibleAt).to.be.equal(endTime);
 
-      expect(preUserStakeIds.length).to.be.equal(4);
-      expect(preUserStakeIds[0]).to.be.equal(1);
-      expect(preUserStakeIds[1]).to.be.equal(2);
-      expect(preUserStakeIds[2]).to.be.equal(3);
-      expect(preUserStakeIds[3]).to.be.equal(4);
+      expect(preUserids.length).to.be.equal(4);
+      expect(preUserids[0]).to.be.equal(1);
+      expect(preUserids[1]).to.be.equal(2);
+      expect(preUserids[2]).to.be.equal(3);
+      expect(preUserids[3]).to.be.equal(4);
 
       expect(preUserBalance).to.be.equal(getBigNumber(6_000));
 
@@ -720,10 +720,10 @@ describe("Test Set Name", () => {
       expect(postStakeData.owner).to.be.equal(ethers.constants.AddressZero);
       expect(postStakeData.unstakePossibleAt).to.be.equal(0);
 
-      expect(postUserStakeIds.length).to.be.equal(3);
-      expect(postUserStakeIds[0]).to.be.equal(1);
-      expect(postUserStakeIds[1]).to.be.equal(4);
-      expect(postUserStakeIds[2]).to.be.equal(3);
+      expect(postUserids.length).to.be.equal(3);
+      expect(postUserids[0]).to.be.equal(1);
+      expect(postUserids[1]).to.be.equal(4);
+      expect(postUserids[2]).to.be.equal(3);
 
       expect(postUserBalance).to.be.equal(BigNumber.from("7000011415525114155200"));
 
@@ -895,7 +895,7 @@ describe("Test Set Name", () => {
     });
   });
 
-  describe("'getAllUserStakeIds' function tests", () => {
+  describe("'getAllUserids' function tests", () => {
     let startTime;
     let endTime;
 
@@ -920,9 +920,9 @@ describe("Test Set Name", () => {
     });
 
     it("Should return empty array", async () => {
-      const stakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const ids = await stakingContract.getAllUserStakeIds(alice.address);
 
-      expect(stakeIds.length).to.be.equal(0);
+      expect(ids.length).to.be.equal(0);
     });
 
     it("Should return array with values", async () => {
@@ -934,11 +934,11 @@ describe("Test Set Name", () => {
 
       await stakingContract.connect(alice).stake(1, getBigNumber(9_000));
 
-      const stakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const ids = await stakingContract.getAllUserStakeIds(alice.address);
 
-      expect(stakeIds.length).to.be.equal(2);
-      expect(stakeIds[0]).to.be.equal(1);
-      expect(stakeIds[1]).to.be.equal(2);
+      expect(ids.length).to.be.equal(2);
+      expect(ids[0]).to.be.equal(1);
+      expect(ids[1]).to.be.equal(2);
     });
   });
 
@@ -989,19 +989,19 @@ describe("Test Set Name", () => {
 
       expect(stakes.length).to.be.equal(3);
 
-      expect(stakes[0].stakeId).to.be.equal(1);
+      expect(stakes[0].id).to.be.equal(1);
       expect(stakes[0].stakingPoolId).to.be.equal(1);
       expect(stakes[0].staked).to.be.equal(getBigNumber(1_000));
       expect(stakes[0].rewards).to.be.equal(BigNumber.from("11415525114155200"));
       expect(stakes[0].unstakePossibleAt).to.be.equal(endTime);
 
-      expect(stakes[1].stakeId).to.be.equal(2);
+      expect(stakes[1].id).to.be.equal(2);
       expect(stakes[1].stakingPoolId).to.be.equal(1);
       expect(stakes[1].staked).to.be.equal(getBigNumber(2_000));
       expect(stakes[1].rewards).to.be.equal(BigNumber.from("22831050228310400"));
       expect(stakes[1].unstakePossibleAt).to.be.equal(endTime);
 
-      expect(stakes[2].stakeId).to.be.equal(3);
+      expect(stakes[2].id).to.be.equal(3);
       expect(stakes[2].stakingPoolId).to.be.equal(1);
       expect(stakes[2].staked).to.be.equal(getBigNumber(4_000));
       expect(stakes[2].rewards).to.be.equal(BigNumber.from("45662100456620800"));
@@ -1029,17 +1029,147 @@ describe("Test Set Name", () => {
 
       expect(stakes.length).to.be.equal(2);
 
-      expect(stakes[0].stakeId).to.be.equal(1);
+      expect(stakes[0].id).to.be.equal(1);
       expect(stakes[0].stakingPoolId).to.be.equal(1);
       expect(stakes[0].staked).to.be.equal(getBigNumber(1_000));
       expect(stakes[0].rewards).to.be.equal(BigNumber.from("11415525114155200"));
       expect(stakes[0].unstakePossibleAt).to.be.equal(endTime);
 
-      expect(stakes[1].stakeId).to.be.equal(3);
+      expect(stakes[1].id).to.be.equal(3);
       expect(stakes[1].stakingPoolId).to.be.equal(1);
       expect(stakes[1].staked).to.be.equal(getBigNumber(4_000));
       expect(stakes[1].rewards).to.be.equal(BigNumber.from("45662100456620800"));
       expect(stakes[1].unstakePossibleAt).to.be.equal(endTime);
+    });
+  });
+
+  describe("'getAllStakingPools' function tests", () => {
+    it("Should return empty array", async () => {
+      const stakingPools = await stakingContract.getAllStakingPools();
+
+      expect(stakingPools.length).to.be.equal(0);
+    });
+
+    it("Should return array of correct values (with different Pool statuses)", async () => {
+      lastBlockTime = await getLastBlockTimestamp();
+
+      const firstStartTime = lastBlockTime + 10;
+      const firstEndTime = lastBlockTime + 1_000;
+
+      const secondStartTime = lastBlockTime + 100;
+      const secondEndTime = lastBlockTime + 1_100;
+
+      const thirdStartTime = lastBlockTime + 2_000;
+      const thirdEndTime = lastBlockTime + 3_000;
+
+      const fourthStartTime = lastBlockTime + 10;
+      const fourthEndTime = lastBlockTime + 63_072_010;
+
+      await erc20fee.approve(stakingContract.address, getBigNumber(50_000));
+
+      await erc20fee.updateExcludedFromFee(stakingContract.address, true);
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        firstStartTime,
+        firstEndTime,
+        1_000
+      );
+
+      await stakingContract.addStakingPool(
+        getBigNumber(20_000),
+        getBigNumber(1),
+        erc20fee.address,
+        secondStartTime,
+        secondEndTime,
+        1_000
+      );
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        thirdStartTime,
+        thirdEndTime,
+        1_000
+      );
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        fourthStartTime,
+        fourthEndTime,
+        5_000
+      );
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(5_000));
+
+      await stakingContract.connect(alice).stake(4, getBigNumber(5_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(5_000));
+
+      await stakingContract.connect(alice).stake(4, getBigNumber(5_000));
+
+      await setNextBlockTimestampAndAdvanceBlock(lastBlockTime + 1_050);
+
+      const stakingPools = await stakingContract.getAllStakingPools();
+
+      expect(stakingPools.length).to.be.equal(4);
+
+      expect(stakingPools[0].id).to.be.equal(1);
+      expect(stakingPools[0].rewardsAdded).to.be.equal(getBigNumber(10_000));
+      expect(stakingPools[0].rewardsDistributed).to.be.equal(0);
+      expect(stakingPools[0].minimumToStake).to.be.equal(getBigNumber(1));
+      expect(stakingPools[0].token).to.be.equal(erc20fee.address);
+      expect(stakingPools[0].startTime).to.be.equal(firstStartTime);
+      expect(stakingPools[0].endTime).to.be.equal(firstEndTime);
+      expect(stakingPools[0].apr).to.be.equal(1_000);
+      expect(stakingPools[0].status).to.be.equal(3);
+
+      expect(stakingPools[1].id).to.be.equal(2);
+      expect(stakingPools[1].rewardsAdded).to.be.equal(getBigNumber(20_000));
+      expect(stakingPools[1].rewardsDistributed).to.be.equal(0);
+      expect(stakingPools[1].minimumToStake).to.be.equal(getBigNumber(1));
+      expect(stakingPools[1].token).to.be.equal(erc20fee.address);
+      expect(stakingPools[1].startTime).to.be.equal(secondStartTime);
+      expect(stakingPools[1].endTime).to.be.equal(secondEndTime);
+      expect(stakingPools[1].apr).to.be.equal(1_000);
+      expect(stakingPools[1].status).to.be.equal(1);
+
+      expect(stakingPools[2].id).to.be.equal(3);
+      expect(stakingPools[2].rewardsAdded).to.be.equal(getBigNumber(10_000));
+      expect(stakingPools[2].rewardsDistributed).to.be.equal(0);
+      expect(stakingPools[2].minimumToStake).to.be.equal(getBigNumber(1));
+      expect(stakingPools[2].token).to.be.equal(erc20fee.address);
+      expect(stakingPools[2].startTime).to.be.equal(thirdStartTime);
+      expect(stakingPools[2].endTime).to.be.equal(thirdEndTime);
+      expect(stakingPools[2].apr).to.be.equal(1_000);
+      expect(stakingPools[2].status).to.be.equal(0);
+
+      expect(stakingPools[3].id).to.be.equal(4);
+      expect(stakingPools[3].rewardsAdded).to.be.equal(getBigNumber(10_000));
+      expect(stakingPools[3].rewardsDistributed).to.be.equal(getBigNumber(10_000));
+      expect(stakingPools[3].minimumToStake).to.be.equal(getBigNumber(1));
+      expect(stakingPools[3].token).to.be.equal(erc20fee.address);
+      expect(stakingPools[3].startTime).to.be.equal(fourthStartTime);
+      expect(stakingPools[3].endTime).to.be.equal(fourthEndTime);
+      expect(stakingPools[3].apr).to.be.equal(5_000);
+      expect(stakingPools[3].status).to.be.equal(2);
+    });
+  });
+
+  describe("'getAllOpenStakingPoolsWithAvailableRewards' function tests", () => {
+    beforeEach(async () => {});
+
+    it("Should return empty array", async () => {
+      throw Error("Not Implemented!");
+    });
+
+    it("Should return array of correct values", async () => {
+      throw Error("Not Implemented!");
     });
   });
 });
