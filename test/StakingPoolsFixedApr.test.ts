@@ -750,4 +750,105 @@ describe("Test Set Name", () => {
       );
     });
   });
+
+  describe("'withdrawUnusedRewards' function tests", () => {
+    let startTime;
+    let endTime;
+
+    beforeEach(async () => {
+      await erc20fee.approve(stakingContract.address, getBigNumber(10_000));
+
+      lastBlockTime = await getLastBlockTimestamp();
+
+      startTime = lastBlockTime + 10;
+      endTime = lastBlockTime + 63_072_010;
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        startTime,
+        endTime,
+        5_000
+      );
+
+      await erc20fee.updateExcludedFromFee(stakingContract.address, true);
+    });
+
+    it("Should work correctly and withdraw unused rewards", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(5_000));
+
+      await setNextBlockTimestamp(startTime - 5);
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(5_000));
+
+      await setNextBlockTimestamp(endTime + 1);
+
+      const preOwnerBalance = await erc20fee.balanceOf(deployer.address);
+      const preStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      await expect(stakingContract.withdrawUnusedRewards(1))
+        .to.emit(stakingContract, StakingPoolFixedApr_Withdrawn_Event)
+        .withArgs(1, getBigNumber(5_000));
+
+      const postOwnerBalance = await erc20fee.balanceOf(deployer.address);
+      const postStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      // Pre Data
+
+      expect(preOwnerBalance).to.be.equal(getBigNumber(970_000));
+
+      expect(preStakingContractBalance).to.be.equal(getBigNumber(15_000));
+
+      // Post Data
+
+      expect(postOwnerBalance).to.be.equal(getBigNumber(975_000));
+
+      expect(postStakingContractBalance).to.be.equal(getBigNumber(10_000));
+    });
+
+    it("Should revert when caller isn't the owner", async () => {
+      await expect(stakingContract.connect(alice).withdrawUnusedRewards(1)).to.be.revertedWithCustomError(
+        stakingContract,
+        Ownable_NotOwner_Error
+      );
+    });
+
+    it("Should revert when Staking Pool doesn't exist", async () => {
+      await expect(stakingContract.withdrawUnusedRewards(2)).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_PoolNotExists_Error
+      );
+    });
+
+    it("Should revert when Pool is still open", async () => {
+      await expect(stakingContract.withdrawUnusedRewards(1)).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_CannotBeforeEndTime_Error
+      );
+    });
+
+    it("Should revert when all rewards are distributed", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(5_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(5_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(5_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(5_000));
+
+      await setNextBlockTimestamp(endTime + 1);
+
+      const test = await stakingContract.stakes(1);
+      const test1 = await stakingContract.stakes(2);
+
+      console.log(test.rewards.toString());
+      console.log(test1.rewards.toString());
+
+      await expect(stakingContract.withdrawUnusedRewards(1)).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_NothingToWithdraw_Error
+      );
+    });
+  });
 });
