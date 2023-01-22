@@ -941,4 +941,105 @@ describe("Test Set Name", () => {
       expect(stakeIds[1]).to.be.equal(2);
     });
   });
+
+  describe("'getAllUserStakes' function tests", () => {
+    let startTime;
+    let endTime;
+
+    beforeEach(async () => {
+      lastBlockTime = await getLastBlockTimestamp();
+
+      startTime = lastBlockTime + 60;
+      endTime = lastBlockTime + 3_660;
+
+      await erc20fee.approve(stakingContract.address, getBigNumber(10_000));
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        startTime,
+        endTime,
+        1_000
+      );
+
+      await erc20fee.updateExcludedFromFee(stakingContract.address, true);
+    });
+
+    it("Should return empty array", async () => {
+      const stakes = await stakingContract.getAllUserStakes(alice.address);
+
+      expect(stakes.length).to.be.equal(0);
+    });
+
+    it("Should return array of stakes", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(2_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(2_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(4_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(4_000));
+
+      const stakes = await stakingContract.getAllUserStakes(alice.address);
+
+      expect(stakes.length).to.be.equal(3);
+
+      expect(stakes[0].stakeId).to.be.equal(1);
+      expect(stakes[0].stakingPoolId).to.be.equal(1);
+      expect(stakes[0].staked).to.be.equal(getBigNumber(1_000));
+      expect(stakes[0].rewards).to.be.equal(BigNumber.from("11415525114155200"));
+      expect(stakes[0].unstakePossibleAt).to.be.equal(endTime);
+
+      expect(stakes[1].stakeId).to.be.equal(2);
+      expect(stakes[1].stakingPoolId).to.be.equal(1);
+      expect(stakes[1].staked).to.be.equal(getBigNumber(2_000));
+      expect(stakes[1].rewards).to.be.equal(BigNumber.from("22831050228310400"));
+      expect(stakes[1].unstakePossibleAt).to.be.equal(endTime);
+
+      expect(stakes[2].stakeId).to.be.equal(3);
+      expect(stakes[2].stakingPoolId).to.be.equal(1);
+      expect(stakes[2].staked).to.be.equal(getBigNumber(4_000));
+      expect(stakes[2].rewards).to.be.equal(BigNumber.from("45662100456620800"));
+      expect(stakes[2].unstakePossibleAt).to.be.equal(endTime);
+    });
+
+    it("Should return array of stakes (after user unstake some stake)", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(2_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(2_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(4_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(4_000));
+
+      await setNextBlockTimestamp(endTime);
+
+      await stakingContract.connect(alice).unstake(2);
+
+      const stakes = await stakingContract.getAllUserStakes(alice.address);
+
+      expect(stakes.length).to.be.equal(2);
+
+      expect(stakes[0].stakeId).to.be.equal(1);
+      expect(stakes[0].stakingPoolId).to.be.equal(1);
+      expect(stakes[0].staked).to.be.equal(getBigNumber(1_000));
+      expect(stakes[0].rewards).to.be.equal(BigNumber.from("11415525114155200"));
+      expect(stakes[0].unstakePossibleAt).to.be.equal(endTime);
+
+      expect(stakes[1].stakeId).to.be.equal(3);
+      expect(stakes[1].stakingPoolId).to.be.equal(1);
+      expect(stakes[1].staked).to.be.equal(getBigNumber(4_000));
+      expect(stakes[1].rewards).to.be.equal(BigNumber.from("45662100456620800"));
+      expect(stakes[1].unstakePossibleAt).to.be.equal(endTime);
+    });
+  });
 });
