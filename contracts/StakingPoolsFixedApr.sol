@@ -9,11 +9,24 @@ import "./libraries/StableMath.sol";
 
 pragma solidity 0.8.17;
 
-/// @title
-/// @notice
+/**
+ * @notice This is staking contract which allows for owner create Pools with defined start and end times, token,
+ *         APR, minimum amount tokens to stake and rewards. APR is always fixed. Users have to stake given token
+ *         defined by the owner in the given Pool and they also earn rewards in the same token. Users can join
+ *         to Pool, stake tokens and earn rewards if given Pool has available rewards and isn't closed. Owner of
+ *         this contract can withdraw unused rewards when Pool will be closed.
+ */
 contract StakingPoolsFixedApr is Ownable {
+    // -----------------------------------------------------------------------
+    //                                Libraries
+    // -----------------------------------------------------------------------
+
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+
+    // -----------------------------------------------------------------------
+    //                                 Errors
+    // -----------------------------------------------------------------------
 
     error StakingPoolFixedApr_IncorrectAmountTransferred();
     error StakingPoolFixedApr_ZeroRewardsAmount();
@@ -29,6 +42,18 @@ contract StakingPoolsFixedApr is Ownable {
     error StakingPoolFixedApr_CannotBeforeEndTime();
     error StakingPoolFixedApr_NothingToWithdraw();
 
+    // -----------------------------------------------------------------------
+    //                                 Enums
+    // -----------------------------------------------------------------------
+
+    /**
+     * @dev Enum used in external view function which allows to show what is the
+     *      status of current Pool.
+     * @custom:Pending - Pool hasn't started yet and has available rewards.
+     * @custom:Open - Pool already started and has available rewards.
+     * @custom:WithoutRewards - Pool doesn't have any available rewards.
+     * @custom:Closed - Pool is closed.
+     */
     enum PoolStatus {
         Pending,
         Open,
@@ -36,51 +61,108 @@ contract StakingPoolsFixedApr is Ownable {
         Closed
     }
 
+    // -----------------------------------------------------------------------
+    //                                 Structs
+    // -----------------------------------------------------------------------
+
+    /// @dev Struct used in state variables which stores Pool configuration.
     struct StakingPool {
+        /// @dev Rewards added for the entire Pool.
         uint256 rewardsAdded;
+        /// @dev Minimum amount of tokens which is required to join to this Pool.
         uint256 minimumToStake;
+        /// @dev ERC-20 token used in this Pool.
         IERC20 token;
+        /// @dev Pool start time.
         uint64 startTime;
+        /// @dev Pool end time.
         uint64 endTime;
+        /// @dev APR - 100 = 1%.
         uint16 apr;
     }
 
+    /// @dev Struct used in state variables to store every user stake data.
     struct Stake {
+        /// @dev Staking Pool id to which given stake belongs to.
         uint256 stakingPoolId;
+        /// @dev Amount of staked tokens.
         uint256 staked;
+        /// @dev Rewards which user will earn.
         uint256 rewards;
+        /// @dev Owner of the given stake.
         address owner;
+        /// @dev First possible time when user will be able to unstake his tokens with rewards.
         uint64 unstakePossibleAt;
     }
 
+    /// @dev Struct used in view functions to return Stake data.
     struct StakeDTO {
+        /// @dev Id of the given Stake.
         uint256 id;
+        /// @dev Staking Pool id to which given stake belongs to.
         uint256 stakingPoolId;
+        /// @dev Amount of staked tokens.
         uint256 staked;
+        /// @dev Rewards which user will earn.
         uint256 rewards;
+        /// @dev First possible time when user will be able to unstake his tokens with rewards.
         uint64 unstakePossibleAt;
     }
 
+    /// @dev Struct used in view function to return Staking Pool data.
     struct StakingPoolDTO {
+        /// @dev Id of the given Staking Pool.
         uint256 id;
+        /// @dev Rewards added for the entire Pool.
         uint256 rewardsAdded;
+        /// @dev Currently distributed rewards.
         uint256 rewardsDistributed;
+        /// @dev Minimum amount of tokens which is required to join to this Pool.
         uint256 minimumToStake;
+        /// @dev ERC-20 token used in this Pool.
         IERC20 token;
+        /// @dev Pool start time.
         uint64 startTime;
+        /// @dev Pool end time.
         uint64 endTime;
+        /// @dev APR - 100 = 1%.
         uint16 apr;
+        /// @dev Current Staking Pool status (more in enum section).
         PoolStatus status;
     }
 
+    // -----------------------------------------------------------------------
+    //                              State Variables
+    // -----------------------------------------------------------------------
+
+    /// @dev Last added Staking Pool id. Used during creating new Pool by incrementing by 1.
     uint256 private lastStakingPoolId;
+    /// @dev Last added Stake id. Used during creating new Stake by incrementing by 1.
     uint256 private lastStakeId;
 
+    /// @dev Mapping which stores all Staking Pools. Id => Staking Pool.
     mapping(uint256 => StakingPool) public stakingPools;
+    /// @dev Mapping which stores currently distributed rewards for Pools. Staking Pool Id => Distributed rewards.
     mapping(uint256 => uint256) public rewardsDistributed;
+    /// @dev Mapping which stores all Stakes. Id => Stake
     mapping(uint256 => Stake) public stakes;
+    /// @dev Mapping which stores all user Stake ids. Address => Array of ids.
     mapping(address => uint256[]) public userStakeIds;
 
+    // -----------------------------------------------------------------------
+    //                                  Events
+    // -----------------------------------------------------------------------
+
+    /**
+     * @dev Emitted when new Staking Pool was added.
+     * @param stakingPoolId Id.
+     * @param rewardsAdded Amount of rewards.
+     * @param minimumToStake amount of tokens which is required to join to this Pool.
+     * @param token Added of ERC-20 token used in this Pool.
+     * @param startTime Pool start time.
+     * @param endTime Pool end time.
+     * @param apr APR - 100 = 1%.
+     */
     event StakingPoolAdded(
         uint256 indexed stakingPoolId,
         uint256 rewardsAdded,
@@ -91,6 +173,15 @@ contract StakingPoolsFixedApr is Ownable {
         uint16 apr
     );
 
+    /**
+     * @dev Emitted when user stake his tokens.
+     * @param user Address which staked his tokens.
+     * @param stakeId Id of the new created stake.
+     * @param stakingPoolId Id of the Staking Pool to which user joined.
+     * @param staked Amount of staked tokens.
+     * @param rewards Amount of rewards which user will earn.
+     * @param unstakePossibleAt First possible time when user will be able to unstake his tokens with rewards.
+     */
     event Staked(
         address indexed user,
         uint256 indexed stakeId,
@@ -100,14 +191,32 @@ contract StakingPoolsFixedApr is Ownable {
         uint64 unstakePossibleAt
     );
 
+    /**
+     * @dev Emitted when user performed 'unstake' function.
+     * @param user Address which performed unstake action.
+     * @param stakeId Id of the unstaked Stake.
+     */
     event Unstaked(address indexed user, uint256 indexed stakeId);
 
+    /**
+     * @dev Emitted when owner withdrew unused rewards.
+     * @param stakingPoolId Id of the Staking Pool for which rewards were withdrawn.
+     * @param amount Amount of withdrawn unused rewards.
+     */
     event Withdrawn(uint256 indexed stakingPoolId, uint256 amount);
+
+    // -----------------------------------------------------------------------
+    //                                Modifiers
+    // -----------------------------------------------------------------------
 
     modifier isStakingPoolExists(uint256 stakingPoolId) {
         if (stakingPools[stakingPoolId].startTime == 0) revert StakingPoolFixedApr_PoolNotExists();
         _;
     }
+
+    // -----------------------------------------------------------------------
+    //                            External Functions
+    // -----------------------------------------------------------------------
 
     function addStakingPool(
         uint256 rewardsAmount,
@@ -279,6 +388,10 @@ contract StakingPoolsFixedApr is Ownable {
             stakingPoolDtos[i - 1] = stakingPoolDto;
         }
     }
+
+    // -----------------------------------------------------------------------
+    //                             Private Functions
+    // -----------------------------------------------------------------------
 
     function _deleteFromStakeIds(address user, uint256 stakeId) private {
         uint256 length = userStakeIds[user].length;
