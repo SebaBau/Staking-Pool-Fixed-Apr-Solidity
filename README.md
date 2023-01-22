@@ -1,4 +1,4 @@
-# Synapse Network Contract
+# Staking Pools Fixed Apr Contract
 
 ## Tools
 
