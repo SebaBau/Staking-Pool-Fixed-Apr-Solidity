@@ -213,6 +213,17 @@ contract StakingPoolsFixedApr is Ownable {
         emit Withdrawn(stakingPoolId, amountToWithdraw);
     }
 
+    function calculateRewards(uint256 stakingPoolId, uint256 amount)
+        external
+        view
+        isStakingPoolExists(stakingPoolId)
+        returns (uint256)
+    {
+        StakingPool memory stakingPool = stakingPools[stakingPoolId];
+
+        return _calculateRewards(amount, stakingPool.startTime, stakingPool.endTime, stakingPool.apr);
+    }
+
     function getAllUserStakeIds(address user) external view returns (uint256[] memory) {
         return userStakeIds[user];
     }
