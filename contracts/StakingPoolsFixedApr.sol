@@ -149,7 +149,7 @@ contract StakingPoolsFixedApr is Ownable {
 
         if (amount < stakingPool.minimumToStake) revert StakingPoolFixedApr_AmountIsBelowMinimumToStake();
 
-        uint64 startTime = block.timestamp > stakingPool.startTime ? uint64(block.timestamp) : stakingPool.startTime;
+        uint64 startTime = _calculateStartTime(uint64(block.timestamp), stakingPool.startTime);
 
         uint256 calculatedRewards = _calculateRewards(amount, startTime, stakingPool.endTime, stakingPool.apr);
 
@@ -221,7 +221,9 @@ contract StakingPoolsFixedApr is Ownable {
     {
         StakingPool memory stakingPool = stakingPools[stakingPoolId];
 
-        return _calculateRewards(amount, stakingPool.startTime, stakingPool.endTime, stakingPool.apr);
+        uint64 startTime = _calculateStartTime(uint64(block.timestamp), stakingPool.startTime);
+
+        return _calculateRewards(amount, startTime, stakingPool.endTime, stakingPool.apr);
     }
 
     function getAllUserStakeIds(address user) external view returns (uint256[] memory) {
@@ -366,5 +368,9 @@ contract StakingPoolsFixedApr is Ownable {
             return PoolStatus.OpenWithoutRewards;
         else if (startTime <= currentTime && endTime > currentTime) return PoolStatus.Open;
         else return PoolStatus.Closed;
+    }
+
+    function _calculateStartTime(uint64 currentTimestamp, uint64 stakingPoolStartTime) private pure returns (uint64) {
+        return currentTimestamp > stakingPoolStartTime ? currentTimestamp : stakingPoolStartTime;
     }
 }
