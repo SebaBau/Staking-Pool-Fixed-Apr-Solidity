@@ -280,44 +280,6 @@ contract StakingPoolsFixedApr is Ownable {
         }
     }
 
-    function getAllOpenStakingPoolsWithAvailableRewards()
-        external
-        view
-        returns (StakingPoolDTO[] memory stakingPoolDtos)
-    {
-        uint256 stakingPoolsAmount = lastStakingPoolId;
-        stakingPoolDtos = new StakingPoolDTO[](stakingPoolsAmount);
-
-        for (uint256 i = 1; i <= stakingPoolsAmount; i++) {
-            StakingPool memory stakingPool = stakingPools[i];
-
-            uint256 rewardsDistributed_ = rewardsDistributed[i];
-
-            PoolStatus status = _calculatePoolStatus(
-                stakingPool.rewardsAdded,
-                rewardsDistributed_,
-                block.timestamp,
-                stakingPool.startTime,
-                stakingPool.endTime
-            );
-
-            if (status != PoolStatus.Open) continue;
-            else {
-                StakingPoolDTO memory stakingPoolDto;
-                stakingPoolDto.rewardsAdded = stakingPool.rewardsAdded;
-                stakingPoolDto.rewardsDistributed = rewardsDistributed_;
-                stakingPoolDto.minimumToStake = stakingPool.minimumToStake;
-                stakingPoolDto.token = stakingPool.token;
-                stakingPoolDto.startTime = stakingPool.startTime;
-                stakingPoolDto.endTime = stakingPool.endTime;
-                stakingPoolDto.apr = stakingPool.apr;
-                stakingPoolDto.status = PoolStatus.Open;
-
-                stakingPoolDtos[i - 1] = stakingPoolDto;
-            }
-        }
-    }
-
     function _deleteFromStakeIds(address user, uint256 stakeId) private {
         uint256 length = userStakeIds[user].length;
 
