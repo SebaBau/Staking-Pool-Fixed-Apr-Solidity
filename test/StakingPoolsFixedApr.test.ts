@@ -27,10 +27,13 @@ describe("Test Set Name", () => {
   const StakingPoolFixedApr_NotEnoughTokensForReward_Error = "StakingPoolFixedApr_NotEnoughTokensForReward";
   const StakingPoolFixedApr_StakeNotExists_Error = "StakingPoolFixedApr_StakeNotExists";
   const StakingPoolFixedApr_CannotUnstakeYet_Error = "StakingPoolFixedApr_CannotUnstakeYet";
+  const StakingPoolFixedApr_CannotBeforeEndTime_Error = "StakingPoolFixedApr_CannotBeforeEndTime";
+  const StakingPoolFixedApr_NothingToWithdraw_Error = "StakingPoolFixedApr_NothingToWithdraw";
 
   const StakingPoolFixedApr_StakingPoolAdded_Event = "StakingPoolAdded";
   const StakingPoolFixedApr_Staked_Event = "Staked";
   const StakingPoolFixedApr_Unstaked_Event = "Unstaked";
+  const StakingPoolFixedApr_Withdrawn_Event = "Withdrawn";
 
   beforeEach(async () => {
     const signers = await ethers.getSigners();
