@@ -25,9 +25,12 @@ describe("Test Set Name", () => {
   const StakingPoolFixedApr_AmountIsBelowMinimumToStake_Error = "StakingPoolFixedApr_AmountIsBelowMinimumToStake";
   const StakingPoolFixedApr_ZeroCalculatedRewards_Error = "StakingPoolFixedApr_ZeroCalculatedRewards";
   const StakingPoolFixedApr_NotEnoughTokensForReward_Error = "StakingPoolFixedApr_NotEnoughTokensForReward";
+  const StakingPoolFixedApr_StakeNotExists_Error = "StakingPoolFixedApr_StakeNotExists";
+  const StakingPoolFixedApr_CannotUnstakeYet_Error = "StakingPoolFixedApr_CannotUnstakeYet";
 
   const StakingPoolFixedApr_StakingPoolAdded_Event = "StakingPoolAdded";
   const StakingPoolFixedApr_Staked_Event = "Staked";
+  const StakingPoolFixedApr_Unstaked_Event = "Unstaked";
 
   beforeEach(async () => {
     const signers = await ethers.getSigners();
@@ -506,5 +509,17 @@ describe("Test Set Name", () => {
         StakingPoolFixedApr_IncorrectAmountTransferred_Error
       );
     });
+  });
+
+  describe("'unstake' function tests", () => {
+    it("Should work correctly and unstake when user has 1 stake", async () => {});
+
+    it("Should work correctly and unstake when user has few stakes (last stake to unstake)", async () => {});
+
+    it("Should work correctly and unstake when user has few stakes (one from middle stakes)", async () => {});
+
+    it("Should revert when stake doesn't exist", async () => {});
+
+    it("Should revert when user cannot unstake yet", async () => {});
   });
 });
