@@ -182,7 +182,7 @@ contract StakingPoolsFixedApr is Ownable {
 
         if (userStake.owner != msg.sender) revert StakingPoolFixedApr_StakeNotExists();
 
-        if (userStake.unstakePossibleAt >= block.timestamp) revert StakingPoolFixedApr_CannotUnstakeYet();
+        if (userStake.unstakePossibleAt > block.timestamp) revert StakingPoolFixedApr_CannotUnstakeYet();
 
         uint256 toWithdraw = userStake.staked + userStake.rewards;
 
