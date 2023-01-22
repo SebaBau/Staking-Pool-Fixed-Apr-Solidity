@@ -32,7 +32,7 @@ contract StakingPoolsFixedApr is Ownable {
     enum PoolStatus {
         Pending,
         Open,
-        OpenWithoutRewards,
+        WithoutRewards,
         Closed
     }
 
@@ -366,8 +366,7 @@ contract StakingPoolsFixedApr is Ownable {
         uint64 endTime
     ) private pure returns (PoolStatus) {
         if (startTime > currentTime) return PoolStatus.Pending;
-        else if (startTime <= currentTime && endTime > currentTime && rewardsAdded == rewardsDistributed_)
-            return PoolStatus.OpenWithoutRewards;
+        else if (rewardsAdded == rewardsDistributed_) return PoolStatus.WithoutRewards;
         else if (startTime <= currentTime && endTime > currentTime) return PoolStatus.Open;
         else return PoolStatus.Closed;
     }
