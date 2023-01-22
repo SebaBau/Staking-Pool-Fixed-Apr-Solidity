@@ -190,6 +190,8 @@ contract StakingPoolsFixedApr is Ownable {
 
         delete stakes[stakeId];
 
+        _deleteFromStakeIds(msg.sender, stakeId);
+
         stakingPools[stakingPoolId].token.safeTransfer(msg.sender, toWithdraw);
 
         emit Unstaked(msg.sender, stakeId);
