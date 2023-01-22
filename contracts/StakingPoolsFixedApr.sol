@@ -240,7 +240,7 @@ contract StakingPoolsFixedApr is Ownable {
 
             Stake memory userStake = stakes[userStakeIds[user][i]];
 
-            userStakeDto.stakeId = userStakeIds[user][i];
+            userStakeDto.id = userStakeIds[user][i];
             userStakeDto.stakingPoolId = userStake.stakingPoolId;
             userStakeDto.staked = userStake.staked;
             userStakeDto.rewards = userStake.rewards;
@@ -260,6 +260,7 @@ contract StakingPoolsFixedApr is Ownable {
             uint256 rewardsDistributed_ = rewardsDistributed[i];
 
             StakingPoolDTO memory stakingPoolDto;
+            stakingPoolDto.id = i;
             stakingPoolDto.rewardsAdded = stakingPool.rewardsAdded;
             stakingPoolDto.rewardsDistributed = rewardsDistributed_;
             stakingPoolDto.minimumToStake = stakingPool.minimumToStake;
