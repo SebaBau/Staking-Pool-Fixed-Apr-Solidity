@@ -894,4 +894,51 @@ describe("Test Set Name", () => {
       );
     });
   });
+
+  describe("'getAllUserStakeIds' function tests", () => {
+    let startTime;
+    let endTime;
+
+    beforeEach(async () => {
+      lastBlockTime = await getLastBlockTimestamp();
+
+      startTime = lastBlockTime + 60;
+      endTime = lastBlockTime + 3_660;
+
+      await erc20fee.approve(stakingContract.address, getBigNumber(10_000));
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        startTime,
+        endTime,
+        1_000
+      );
+
+      await erc20fee.updateExcludedFromFee(stakingContract.address, true);
+    });
+
+    it("Should return empty array", async () => {
+      const stakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+
+      expect(stakeIds.length).to.be.equal(0);
+    });
+
+    it("Should return array with values", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(9_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(9_000));
+
+      const stakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+
+      expect(stakeIds.length).to.be.equal(2);
+      expect(stakeIds[0]).to.be.equal(1);
+      expect(stakeIds[1]).to.be.equal(2);
+    });
+  });
 });
