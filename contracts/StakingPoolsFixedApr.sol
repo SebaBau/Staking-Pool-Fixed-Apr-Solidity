@@ -54,7 +54,7 @@ contract StakingPoolsFixedApr is Ownable {
     }
 
     struct StakeDTO {
-        uint256 stakeId;
+        uint256 id;
         uint256 stakingPoolId;
         uint256 staked;
         uint256 rewards;
@@ -62,6 +62,7 @@ contract StakingPoolsFixedApr is Ownable {
     }
 
     struct StakingPoolDTO {
+        uint256 id;
         uint256 rewardsAdded;
         uint256 rewardsDistributed;
         uint256 minimumToStake;
