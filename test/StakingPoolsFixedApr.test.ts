@@ -512,14 +512,239 @@ describe("Test Set Name", () => {
   });
 
   describe("'unstake' function tests", () => {
-    it("Should work correctly and unstake when user has 1 stake", async () => {});
+    let startTime;
+    let endTime;
 
-    it("Should work correctly and unstake when user has few stakes (last stake to unstake)", async () => {});
+    beforeEach(async () => {
+      lastBlockTime = await getLastBlockTimestamp();
 
-    it("Should work correctly and unstake when user has few stakes (one from middle stakes)", async () => {});
+      startTime = lastBlockTime + 60;
+      endTime = lastBlockTime + 3_660;
 
-    it("Should revert when stake doesn't exist", async () => {});
+      await erc20fee.approve(stakingContract.address, getBigNumber(10_000));
 
-    it("Should revert when user cannot unstake yet", async () => {});
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        startTime,
+        endTime,
+        1_000
+      );
+
+      await erc20fee.updateExcludedFromFee(stakingContract.address, true);
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+    });
+
+    it("Should work correctly and unstake when user has 1 stake", async () => {
+      lastBlockTime = await getLastBlockTimestamp();
+
+      await setNextBlockTimestamp(endTime);
+
+      const preStakeData = await stakingContract.stakes(1);
+      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserBalance = await erc20fee.balanceOf(alice.address);
+      const preStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      await expect(stakingContract.connect(alice).unstake(1))
+        .to.emit(stakingContract, StakingPoolFixedApr_Unstaked_Event)
+        .withArgs(alice.address, 1);
+
+      const postStakeData = await stakingContract.stakes(1);
+      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserBalance = await erc20fee.balanceOf(alice.address);
+      const postStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      // Pre Data
+
+      expect(preStakeData.stakingPoolId).to.be.equal(1);
+      expect(preStakeData.staked).to.be.equal(getBigNumber(1_000));
+      expect(preStakeData.rewards).to.be.equal(BigNumber.from("11415525114155200"));
+      expect(preStakeData.owner).to.be.equal(alice.address);
+      expect(preStakeData.unstakePossibleAt).to.be.equal(endTime);
+
+      expect(preUserStakeIds.length).to.be.equal(1);
+      expect(preUserStakeIds[0]).to.be.equal(1);
+
+      expect(preUserBalance).to.be.equal(getBigNumber(9_000));
+
+      expect(preStakingContractBalance).to.be.equal(getBigNumber(11_000));
+
+      // Post Data
+
+      expect(postStakeData.stakingPoolId).to.be.equal(0);
+      expect(postStakeData.staked).to.be.equal(0);
+      expect(postStakeData.rewards).to.be.equal(0);
+      expect(postStakeData.owner).to.be.equal(ethers.constants.AddressZero);
+      expect(postStakeData.unstakePossibleAt).to.be.equal(0);
+
+      expect(postUserStakeIds.length).to.be.equal(0);
+
+      expect(postUserBalance).to.be.equal(BigNumber.from("10000011415525114155200"));
+
+      expect(postStakingContractBalance).to.be.equal(BigNumber.from("9999988584474885844800"));
+    });
+
+    it("Should work correctly and unstake when user has few stakes (last stake to unstake)", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      lastBlockTime = await getLastBlockTimestamp();
+
+      await setNextBlockTimestamp(endTime);
+
+      const preStakeData = await stakingContract.stakes(4);
+      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserBalance = await erc20fee.balanceOf(alice.address);
+      const preStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      await expect(stakingContract.connect(alice).unstake(4))
+        .to.emit(stakingContract, StakingPoolFixedApr_Unstaked_Event)
+        .withArgs(alice.address, 4);
+
+      const postStakeData = await stakingContract.stakes(4);
+      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserBalance = await erc20fee.balanceOf(alice.address);
+      const postStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      // Pre Data
+
+      expect(preStakeData.stakingPoolId).to.be.equal(1);
+      expect(preStakeData.staked).to.be.equal(getBigNumber(1_000));
+      expect(preStakeData.rewards).to.be.equal(BigNumber.from("11415525114155200"));
+      expect(preStakeData.owner).to.be.equal(alice.address);
+      expect(preStakeData.unstakePossibleAt).to.be.equal(endTime);
+
+      expect(preUserStakeIds.length).to.be.equal(4);
+      expect(preUserStakeIds[0]).to.be.equal(1);
+      expect(preUserStakeIds[1]).to.be.equal(2);
+      expect(preUserStakeIds[2]).to.be.equal(3);
+      expect(preUserStakeIds[3]).to.be.equal(4);
+
+      expect(preUserBalance).to.be.equal(getBigNumber(6_000));
+
+      expect(preStakingContractBalance).to.be.equal(getBigNumber(14_000));
+
+      // Post Data
+
+      expect(postStakeData.stakingPoolId).to.be.equal(0);
+      expect(postStakeData.staked).to.be.equal(0);
+      expect(postStakeData.rewards).to.be.equal(0);
+      expect(postStakeData.owner).to.be.equal(ethers.constants.AddressZero);
+      expect(postStakeData.unstakePossibleAt).to.be.equal(0);
+
+      expect(postUserStakeIds.length).to.be.equal(3);
+      expect(postUserStakeIds[0]).to.be.equal(1);
+      expect(postUserStakeIds[1]).to.be.equal(2);
+      expect(postUserStakeIds[2]).to.be.equal(3);
+
+      expect(postUserBalance).to.be.equal(BigNumber.from("7000011415525114155200"));
+
+      expect(postStakingContractBalance).to.be.equal(BigNumber.from("12999988584474885844800"));
+    });
+
+    it("Should work correctly and unstake when user has few stakes (one from middle stakes)", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(alice).stake(1, getBigNumber(1_000));
+
+      lastBlockTime = await getLastBlockTimestamp();
+
+      await setNextBlockTimestamp(endTime);
+
+      const preStakeData = await stakingContract.stakes(2);
+      const preUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const preUserBalance = await erc20fee.balanceOf(alice.address);
+      const preStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      await expect(stakingContract.connect(alice).unstake(2))
+        .to.emit(stakingContract, StakingPoolFixedApr_Unstaked_Event)
+        .withArgs(alice.address, 2);
+
+      const postStakeData = await stakingContract.stakes(2);
+      const postUserStakeIds = await stakingContract.getAllUserStakeIds(alice.address);
+      const postUserBalance = await erc20fee.balanceOf(alice.address);
+      const postStakingContractBalance = await erc20fee.balanceOf(stakingContract.address);
+
+      // Pre Data
+
+      expect(preStakeData.stakingPoolId).to.be.equal(1);
+      expect(preStakeData.staked).to.be.equal(getBigNumber(1_000));
+      expect(preStakeData.rewards).to.be.equal(BigNumber.from("11415525114155200"));
+      expect(preStakeData.owner).to.be.equal(alice.address);
+      expect(preStakeData.unstakePossibleAt).to.be.equal(endTime);
+
+      expect(preUserStakeIds.length).to.be.equal(4);
+      expect(preUserStakeIds[0]).to.be.equal(1);
+      expect(preUserStakeIds[1]).to.be.equal(2);
+      expect(preUserStakeIds[2]).to.be.equal(3);
+      expect(preUserStakeIds[3]).to.be.equal(4);
+
+      expect(preUserBalance).to.be.equal(getBigNumber(6_000));
+
+      expect(preStakingContractBalance).to.be.equal(getBigNumber(14_000));
+
+      // Post Data
+
+      expect(postStakeData.stakingPoolId).to.be.equal(0);
+      expect(postStakeData.staked).to.be.equal(0);
+      expect(postStakeData.rewards).to.be.equal(0);
+      expect(postStakeData.owner).to.be.equal(ethers.constants.AddressZero);
+      expect(postStakeData.unstakePossibleAt).to.be.equal(0);
+
+      expect(postUserStakeIds.length).to.be.equal(3);
+      expect(postUserStakeIds[0]).to.be.equal(1);
+      expect(postUserStakeIds[1]).to.be.equal(4);
+      expect(postUserStakeIds[2]).to.be.equal(3);
+
+      expect(postUserBalance).to.be.equal(BigNumber.from("7000011415525114155200"));
+
+      expect(postStakingContractBalance).to.be.equal(BigNumber.from("12999988584474885844800"));
+    });
+
+    it("Should revert when stake doesn't exist (invalid user)", async () => {
+      await erc20fee.connect(bob).approve(stakingContract.address, getBigNumber(1_000));
+
+      await stakingContract.connect(bob).stake(1, getBigNumber(1_000));
+
+      await expect(stakingContract.connect(alice).unstake(2)).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_StakeNotExists_Error
+      );
+    });
+
+    it("Should revert when stake doesn't exist (doesn't really exist)", async () => {
+      await expect(stakingContract.connect(alice).unstake(2)).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_StakeNotExists_Error
+      );
+    });
+
+    it("Should revert when user cannot unstake yet", async () => {
+      await expect(stakingContract.connect(alice).unstake(1)).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_CannotUnstakeYet_Error
+      );
+    });
   });
 });
