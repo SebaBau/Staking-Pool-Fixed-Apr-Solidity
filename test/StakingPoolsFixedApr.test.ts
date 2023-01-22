@@ -20,6 +20,11 @@ describe("Test Set Name", () => {
   const StakingPoolFixedApr_StartTimeMustBeLaterThanEndTime_Error =
     "StakingPoolFixedApr_StartTimeMustBeLaterThanEndTime";
   const StakingPoolFixedApr_IncorrectAmountTransferred_Error = "StakingPoolFixedApr_IncorrectAmountTransferred";
+  const StakingPoolFixedApr_PoolNotExists_Error = "StakingPoolFixedApr_PoolNotExists";
+  const StakingPoolFixedApr_PoolClosed_Error = "StakingPoolFixedApr_PoolClosed";
+  const StakingPoolFixedApr_AmountIsBelowMinimumToStake_Error = "StakingPoolFixedApr_AmountIsBelowMinimumToStake";
+  const StakingPoolFixedApr_ZeroCalculatedRewards_Error = "StakingPoolFixedApr_ZeroCalculatedRewards";
+  const StakingPoolFixedApr_NotEnoughTokensForReward_Error = "StakingPoolFixedApr_NotEnoughTokensForReward";
 
   const StakingPoolFixedApr_StakingPoolAdded_Event = "StakingPoolAdded";
   const StakingPoolFixedApr_Staked_Event = "Staked";
@@ -417,27 +422,89 @@ describe("Test Set Name", () => {
     });
 
     it("Should revert when Staking Pool doesn't exist", async () => {
-      throw Error("Not Implemented!");
+      await expect(stakingContract.connect(alice).stake(2, getBigNumber(1_000))).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_PoolNotExists_Error
+      );
     });
 
-    it("Should revert when Staking Pool is closed", async () => {
-      throw Error("Not Implemented!");
+    it("Should revert when Staking Pool is closed (current timestamp is equal end time)", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await setNextBlockTimestamp(endTime);
+
+      await expect(stakingContract.connect(alice).stake(1, getBigNumber(1_000))).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_PoolClosed_Error
+      );
+    });
+
+    it("Should revert when Staking Pool is closed (current timestamp is greater end time)", async () => {
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await setNextBlockTimestamp(endTime + 1);
+
+      await expect(stakingContract.connect(alice).stake(1, getBigNumber(1_000))).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_PoolClosed_Error
+      );
     });
 
     it("Should revert when given amount is below minimum to stake value", async () => {
-      throw Error("Not Implemented!");
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await expect(
+        stakingContract.connect(alice).stake(1, BigNumber.from("99999999999999999"))
+      ).to.be.revertedWithCustomError(stakingContract, StakingPoolFixedApr_AmountIsBelowMinimumToStake_Error);
     });
 
     it("Should revert when calculated rewards equal zero", async () => {
-      throw Error("Not Implemented!");
+      await erc20fee.approve(stakingContract.address, getBigNumber(10_000));
+
+      await stakingContract.addStakingPool(getBigNumber(10_000), 0, erc20fee.address, startTime, endTime, 1_000);
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await expect(stakingContract.connect(alice).stake(2, BigNumber.from("5000"))).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_ZeroCalculatedRewards_Error
+      );
     });
 
     it("Should revert when calculated rewards are greater than available rewards", async () => {
-      throw Error("Not Implemented!");
+      await erc20fee.approve(stakingContract.address, getBigNumber(10_000));
+
+      lastBlockTime = await getLastBlockTimestamp();
+
+      const secondStakingPoolStartTime = lastBlockTime + 10;
+      const secondStakingPoolEndTime = lastBlockTime + 63_072_010;
+
+      await stakingContract.addStakingPool(
+        getBigNumber(10_000),
+        getBigNumber(1),
+        erc20fee.address,
+        secondStakingPoolStartTime,
+        secondStakingPoolEndTime,
+        5_100
+      );
+
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(10_000));
+
+      await expect(stakingContract.connect(alice).stake(2, getBigNumber(10_000))).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_NotEnoughTokensForReward_Error
+      );
     });
 
     it("Should revert when incorrect amount of tokens are transferred from user to contract", async () => {
-      throw Error("Not Implemented!");
+      await erc20fee.connect(alice).approve(stakingContract.address, getBigNumber(1_000));
+
+      await erc20fee.updateExcludedFromFee(stakingContract.address, false);
+
+      await expect(stakingContract.connect(alice).stake(1, getBigNumber(1_000))).to.be.revertedWithCustomError(
+        stakingContract,
+        StakingPoolFixedApr_IncorrectAmountTransferred_Error
+      );
     });
   });
 });
