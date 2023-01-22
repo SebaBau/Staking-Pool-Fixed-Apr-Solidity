@@ -1160,16 +1160,4 @@ describe("Test Set Name", () => {
       expect(stakingPools[3].status).to.be.equal(2);
     });
   });
-
-  describe("'getAllOpenStakingPoolsWithAvailableRewards' function tests", () => {
-    beforeEach(async () => {});
-
-    it("Should return empty array", async () => {
-      throw Error("Not Implemented!");
-    });
-
-    it("Should return array of correct values", async () => {
-      throw Error("Not Implemented!");
-    });
-  });
 });
