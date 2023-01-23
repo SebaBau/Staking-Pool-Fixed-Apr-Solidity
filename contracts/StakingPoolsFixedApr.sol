@@ -157,7 +157,7 @@ contract StakingPoolsFixedApr is Ownable {
      * @dev Emitted when new Staking Pool was added.
      * @param stakingPoolId Id.
      * @param rewardsAdded Amount of rewards.
-     * @param minimumToStake amount of tokens which is required to join to this Pool.
+     * @param minimumToStake Amount of tokens which is required to join to this Pool.
      * @param token Added of ERC-20 token used in this Pool.
      * @param startTime Pool start time.
      * @param endTime Pool end time.
@@ -209,6 +209,10 @@ contract StakingPoolsFixedApr is Ownable {
     //                                Modifiers
     // -----------------------------------------------------------------------
 
+    /**
+     * @dev This modifier allows to validate if Staking Pool for the given 'stakingPoolId' exists.
+     * @param stakingPoolId Id of the Staking Pool to validate.
+     */
     modifier isStakingPoolExists(uint256 stakingPoolId) {
         if (stakingPools[stakingPoolId].startTime == 0) revert StakingPoolFixedApr_PoolNotExists();
         _;
@@ -218,6 +222,27 @@ contract StakingPoolsFixedApr is Ownable {
     //                            External Functions
     // -----------------------------------------------------------------------
 
+    /**
+     * @dev This function allows to add new Staking Pool in the contract.
+     *
+     * @dev Validations :
+     * - Only contract owner can perform this function.
+     * - Amount of rewards to add cannot be zero.
+     * - Start time must be in the future.
+     * - Start time cannot be greater or equal end time.
+     * - Amount of given 'rewardsAmount' must be transferred correctly.
+     *
+     * @dev Parameters :
+     * @param rewardsAmount Amount of rewards to add for Staking Pool.
+     * @param minimumToStake_ Amount of tokens which is required to join to this Pool.
+     * @param token_ ERC-20 token address used in this Pool.
+     * @param startTime_ Pool start time.
+     * @param endTime_ Pool end time.
+     * @param apr_ APR - 100 = 1%.
+     *
+     * @dev Events :
+     * - {StakingPoolAdded}
+     */
     function addStakingPool(
         uint256 rewardsAmount,
         uint256 minimumToStake_,
@@ -252,6 +277,26 @@ contract StakingPoolsFixedApr is Ownable {
         );
     }
 
+    /**
+     * @dev This function allows to join to the Staking Pool as a staker. Users can join before start time (then
+     *      earning rewards start time will be equal Staking Pool start time) or after (then earning rewards start
+     *      time will be equal current block timestamp).
+     *
+     * @dev Validations :
+     * - Pool to which user wants to join must exists.
+     * - Pool cannot be closed.
+     * - Amount of tokens which user wants to add must be greater than minimum possible amount defined in the Pool.
+     * - Calculated rewards cannot be equal zero.
+     * - Pool must have available amount of rewards (equal or greater than calculated rewards).
+     * - Amount of tokens which user wants to add must be transferred correctly to the contract.
+     *
+     * @dev Parameters :
+     * @param stakingPoolId Id of the Staking Pool to which user wants to join.
+     * @param amount Amount of tokens which user wants to stake.
+     *
+     * @dev Events :
+     * - {Staked}
+     */
     function stake(uint256 stakingPoolId, uint256 amount) external isStakingPoolExists(stakingPoolId) {
         StakingPool memory stakingPool = stakingPools[stakingPoolId];
 
@@ -287,6 +332,19 @@ contract StakingPoolsFixedApr is Ownable {
         emit Staked(msg.sender, stakeId, stakingPoolId, amount, calculatedRewards, stakingPool.endTime);
     }
 
+    /**
+     * @dev This function allows to unstake staked tokens with earned rewards.
+     *
+     * @dev Validations :
+     * - Stake for the given 'stakeId' must exists (sender must be the owner of the Stake).
+     * - Stake must be possible to unstake ('unstakePossibleAt' verification).
+     *
+     * @dev Parameters :
+     * @param stakeId Id of the Stake to unstake.
+     *
+     * @dev Events :
+     * - {Unstaked}
+     */
     function unstake(uint256 stakeId) external {
         Stake memory userStake = stakes[stakeId];
 
@@ -307,6 +365,21 @@ contract StakingPoolsFixedApr is Ownable {
         emit Unstaked(msg.sender, stakeId);
     }
 
+    /**
+     * @dev This function allows to withdraw unused tokens by the owner for the given Staking Pool.
+     *
+     * @dev Validations :
+     * - Only contract owner can perform this function.
+     * - Given Pool must exists.
+     * - Cannot withdraw unused rewards until Pool is open.
+     * - Pool must have any tokens to withdraw.
+     *
+     * @dev Parameters :
+     * @param stakingPoolId Id of the Staking Pool for which tokens should be withdrawn.
+     *
+     * @dev Events :
+     * - {Withdrawn}
+     */
     function withdrawUnusedRewards(uint256 stakingPoolId) external onlyOwner isStakingPoolExists(stakingPoolId) {
         StakingPool memory stakingPool = stakingPools[stakingPoolId];
 
@@ -323,6 +396,18 @@ contract StakingPoolsFixedApr is Ownable {
         emit Withdrawn(stakingPoolId, amountToWithdraw);
     }
 
+    /**
+     * @dev View function which allows to calculate rewards for the given Pool and amount of tokens.
+     *
+     * @dev Validations :
+     * - Pool for the given 'stakingPoolId' must exists.
+     *
+     * @dev Parameters :
+     * @param stakingPoolId Id of the Staking Pool for which calculation should be performed.
+     * @param amount Amount of tokens to use in calculation.
+     *
+     * @return uint256 Calculated rewards.
+     */
     function calculateRewards(uint256 stakingPoolId, uint256 amount)
         external
         view
@@ -336,10 +421,26 @@ contract StakingPoolsFixedApr is Ownable {
         return _calculateRewards(amount, startTime, stakingPool.endTime, stakingPool.apr);
     }
 
+    /**
+     * @dev View function which allows to fetch all Stake ids for the given user.
+     *
+     * @dev Parameters :
+     * @param user Address for which ids should be returned.
+     *
+     * @return uint256[] Array of Stake ids.
+     */
     function getAllUserStakeIds(address user) external view returns (uint256[] memory) {
         return userStakeIds[user];
     }
 
+    /**
+     * @dev View function which allows to fetch all user Stakes.
+     *
+     * @dev Parameters :
+     * @param user Address for which Stakes should be returned.
+     *
+     * @return userStakes Array of StakeDTOs.
+     */
     function getAllUserStakes(address user) external view returns (StakeDTO[] memory userStakes) {
         uint256 userStakeIdLength = userStakeIds[user].length;
         userStakes = new StakeDTO[](userStakeIdLength);
@@ -359,6 +460,11 @@ contract StakingPoolsFixedApr is Ownable {
         }
     }
 
+    /**
+     * @dev View function which allows to fetch all Staking Pools.
+     *
+     * @return stakingPoolDtos Array of StakingPoolDTOs.
+     */
     function getAllStakingPools() external view returns (StakingPoolDTO[] memory stakingPoolDtos) {
         uint256 stakingPoolsAmount = lastStakingPoolId;
         stakingPoolDtos = new StakingPoolDTO[](stakingPoolsAmount);
