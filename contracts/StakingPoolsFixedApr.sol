@@ -499,6 +499,13 @@ contract StakingPoolsFixedApr is Ownable {
     //                             Private Functions
     // -----------------------------------------------------------------------
 
+    /**
+     * @dev Allows to delete ids from the user stake ids.
+     *
+     * @dev Parameters :
+     * @param user Address for which id should be removed.
+     * @param stakeId Id to remove.
+     */
     function _deleteFromStakeIds(address user, uint256 stakeId) private {
         uint256 length = userStakeIds[user].length;
 
@@ -515,6 +522,14 @@ contract StakingPoolsFixedApr is Ownable {
         }
     }
 
+    /**
+     * @dev Validates data during adding new Staking Pool.
+     *
+     * @dev Parameters :
+     * @param rewardsAmount Amount of rewards added to the Pool.
+     * @param startTime Pool start time.
+     * @param endTime Pool end time.
+     */
     function _validateStakingPoolData(
         uint256 rewardsAmount,
         uint64 startTime,
@@ -527,6 +542,17 @@ contract StakingPoolsFixedApr is Ownable {
         if (startTime >= endTime) revert StakingPoolFixedApr_StartTimeMustBeLaterThanEndTime();
     }
 
+    /**
+     * @dev Allows to calculate rewards.
+     *
+     * @dev Parameters :
+     * @param stakedAmount Amount of staked tokens.
+     * @param startTime Pool start time.
+     * @param endTime Pool end time.
+     * @param apr APR - 100 = 1%.
+     *
+     * @return uint256 Calculated rewards.
+     */
     function _calculateRewards(
         uint256 stakedAmount,
         uint64 startTime,
@@ -539,6 +565,18 @@ contract StakingPoolsFixedApr is Ownable {
         return annualAmount.mulTruncate(timeRatio);
     }
 
+    /**
+     * @dev Calculate current Pool status.
+     *
+     * @dev Parameters :
+     * @param rewardsAdded Rewards added to the Staking Pool.
+     * @param rewardsDistributed_ Currently distributed rewards for the given Pool.
+     * @param currentTime Current block timestamp.
+     * @param startTime Pool start time.
+     * @param endTime Pool end time.
+     *
+     * @return PoolStatus Current Pool status.
+     */
     function _calculatePoolStatus(
         uint256 rewardsAdded,
         uint256 rewardsDistributed_,
@@ -552,6 +590,15 @@ contract StakingPoolsFixedApr is Ownable {
         else return PoolStatus.Closed;
     }
 
+    /**
+     * @dev Allows to calculate start time for the given stake.
+     *
+     * @dev Parameters :
+     * @param currentTimestamp Current or last block timestamp.
+     * @param stakingPoolStartTime Pool start time.
+     *
+     * @return uint64 Calculated start time.
+     */
     function _calculateStartTime(uint64 currentTimestamp, uint64 stakingPoolStartTime) private pure returns (uint64) {
         return currentTimestamp > stakingPoolStartTime ? currentTimestamp : stakingPoolStartTime;
     }
